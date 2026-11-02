@@ -1,0 +1,33 @@
+# Compose SÓ do bot. A Evolution API continua rodando onde já está — isto NÃO a toca.
+# O bot entra na MESMA rede Docker da Evolution (rede externa, pré-existente) para que
+# os dois conversem pelo nome do container, sem expor portas na internet.
+#
+# Antes de subir, troque <NOME_DA_REDE_DA_EVOLUTION> pelo nome real da rede
+# (veja no DEPLOY.md como descobrir).
+
+services:
+  bot:
+    build: .
+    image: financas-bot:latest
+    container_name: financas-bot
+    restart: unless-stopped
+    env_file: .env
+    # Garante a porta interna; o PORT do .env também vale.
+    environment:
+      - PORT=3000
+      - TZ=America/Sao_Paulo
+    volumes:
+      # Persiste o SQLite fora do container.
+      - ./data:/app/data
+    networks:
+      - evolution-net
+    # OPCIONAL: só descomente se quiser acessar /health do host da VPS.
+    # Para o webhook Evolution -> bot NÃO é necessário publicar porta
+    # (eles se falam pela rede interna pelo nome do container).
+    # ports:
+    #   - "127.0.0.1:3000:3000"
+
+networks:
+  evolution-net:
+    external: true
+    name: <NOME_DA_REDE_DA_EVOLUTION>
